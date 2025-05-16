@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<title></title>
+	<meta name="generator" content="LibreOffice 25.2.3.2 (Windows)"/>
+	<meta name="created" content="00:00:00"/>
+	<meta name="changed" content="2025-05-17T07:05:58.167202900"/>
+	<meta name="Originator" content="Microsoft Word 14"/>
+	<meta name="ProgId" content="Word.Document"/>
+	<meta name="created" content="00:00:00">
+	<style type="text/css">
+		p { color: #000000 }
+	</style>
+</head>
+<body lang="zh-CN" text="#000000" dir="ltr"><p align="center"><font face="等线"><font size="4" style="font-size: 14pt"><span lang="en-US"><b>The
+game of the stock market</b></span></font></font></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p><img src="StockGame.files/StockGame31.png" name="图像1" align="left" hspace="12" width="213" height="303" border="0"/>
+<font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">More
+than ten years ago, after reading a book (titled &quot;</font></font><font size="2" style="font-size: 11pt"><i>The
+Psychology of Finance</i></font>&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">&quot;),
+I was thinking about a question. Since the price fluctuations of the
+stock market are formed by the behavior of stock market participants
+(investors), can we use computers to simulate the behavior of these
+participants to simulate the stock market? After that, this idea has
+never been forgotten. It appears in my mind from time to time, but
+the specific way to do it has never been formed. In addition, I feel
+that the workload is too large and the code development is a bit
+complicated. Until recently&nbsp;...&nbsp;, the emergence of AIGC has
+enabled a person to become a team, allowing me to quickly turn ideas
+into code, thereby turning projects into reality. Let's start our
+game - building our model:</font></font></span></font></p>
+<p>&nbsp;</p>
+<p style="margin-left: 2cm"><font face="Liberation Serif, serif"><span lang="en-US">I.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt"><b>Market
+Participants</b></font></font></span></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Market
+participants can be classified according to many dimensions, such as
+by investment cycle, short-term, medium-term, and long-term
+investors. They can be divided into retail investors (individual
+investors), large investors (high net worth individuals), and
+institutional investors according to the size of their funds. We can
+also classify them by investment style, such as value investors,
+growth investors, trend investors, and contrarian investors.
+According to trading strategies, there are technical analysts,
+fundamental analysts, quantitative traders, and so on. There are
+many, many more.</span></font></font></p>
+<p>&nbsp;</p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">For
+the convenience of simulation, we will first simplify investors in
+the market into four categories from the perspective of user
+behavior: value investors, trend investors, up-and-down investors,
+and random investors. These four types of investors do exist in the
+actual market, and it is important that we can accurately describe
+their behavior with code. Of course, these four types of investors
+alone cannot represent all investors in the real stock market. As our
+simulation progresses, we can introduce more investors with certain
+behavioral characteristics into the simulation to observe the changes
+in their own assets and their impact on the market.</span></font></font></p>
+<p>&nbsp;</p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Let's
+set up the investment behaviors of four types of investors
+respectively:</span></font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.64cm"><font face="Liberation Serif, serif"><span lang="en-US">1.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Rational
+value investors: They trade based solely on their own estimates of
+the intrinsic value of stocks. They have the following behavioral
+characteristics:</font></font></span></font></p>
+<p style="text-indent: -0.78cm; margin-left: 1.55cm"><font face="Liberation Serif, serif"><span lang="en-US">i.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Sell
+when the market price is higher than the valuation, and buy when the
+market price is lower than the valuation</font></font></span></font></p>
+<p style="text-indent: -0.78cm; margin-left: 1.55cm"><font face="Liberation Serif, serif"><span lang="en-US">ii.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Trading
+volume is proportional to the degree of price deviation (percentage);</font></font></span></font></p>
+<p style="text-indent: -0.78cm; margin-left: 1.55cm"><font face="Liberation Serif, serif"><span lang="en-US">iii.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">We
+assume that stocks have a real value, which will change randomly in
+the form of square waves from time to time, thereby simulating the
+impact of a certain event on the value of individual stocks (such as
+favorable or unfavorable information in the real market).</font></font></span></font></p>
+<p style="text-indent: -0.78cm; margin-left: 1.55cm"><font face="Liberation Serif, serif"><span lang="en-US">iv.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Assuming
+that every value investor can always make a relatively correct
+judgment on the company, the valuation will be normally distributed
+around the true value of the stock (the standard deviation can be set
+as a proportion of the true value, such as&nbsp;10%&nbsp;), and the
+average of the valuations of all value investors is equal to the true
+value.</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.64cm"><font face="Liberation Serif, serif"><span lang="en-US">2.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Trend
+investors: Trend investors are also a common group. We assume that
+they have the following behavioral characteristics:</font></font></span></font></p>
+<p style="text-indent: -0.78cm; margin-left: 1.55cm"><font face="Liberation Serif, serif"><span lang="en-US">i.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">For
+simplicity, we use the moving average (&nbsp;MA&nbsp;) as a trading
+signal. When the price crosses above&nbsp;the MA&nbsp;, we buy all
+the stocks, and when it crosses below&nbsp;the MA&nbsp;, we sell all
+the stocks.</font></font></span></font></p>
+<p style="text-indent: -0.78cm; margin-left: 1.55cm"><font face="Liberation Serif, serif"><span lang="en-US">ii.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">The
+MA&nbsp;period ofeach trend investor&nbsp;is randomly selected from
+[5, 10, 15, 20, 25, 30, 60, 120]&nbsp;, and different investors use
+different observation periods.</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.64cm"><font face="Liberation Serif, serif"><span lang="en-US">3.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Random
+traders: Most of the retail&nbsp;investors&nbsp;may be such a group.
+They have no or no trading strategies or trading principles. They may
+buy or sell according to their intuition. They may do this sometimes
+and that sometimes when they encounter the same situation. But they
+activate and prosper the market.</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.64cm"><font face="Liberation Serif, serif"><span lang="en-US">4.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Buyers
+who chase ups and sell downs: Buyers who chase ups and sell downs are
+also a term often heard in the stock market.&nbsp;The faster&nbsp;or
+higher the stock price rises, the more excited these investors are,
+and the more they are tempted to buy; and when the stock price falls,
+the faster or lower it falls, the more fearful they are, and they
+sell the stock quickly. Here we set it like this: Buyers who chase
+ups and sell downs observe the stock price rise and fall speed within
+a certain period (such as&nbsp;3&nbsp;days,&nbsp;5&nbsp;days&nbsp;...&nbsp;),
+and the proportion of buying and selling is proportional to the rise
+and fall speed.</font></font></span></font></p>
+<p style="margin-left: 0.64cm">&nbsp;</p>
+<p style="margin-left: 0.1cm; orphans: 0"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Next,
+we refer to the actual situation of the real stock market to
+determine the rules of market transactions. For the sake of
+simplicity, we ignore intraday transactions, so the call auction
+mechanism is as follows (the stock market closes every day and the
+call auction ends):</span></font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.74cm"><font face="Liberation Serif, serif"><span lang="en-US">1.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Collect
+all investors’ buy and sell orders;</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.74cm"><font face="Liberation Serif, serif"><span lang="en-US">2.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Sort
+the orders by price;</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.74cm"><font face="Liberation Serif, serif"><span lang="en-US">3.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Find
+the price that can generate the largest trading volume as the
+clearing price;</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.74cm"><font face="Liberation Serif, serif"><span lang="en-US">4.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Execute
+transactions based on the price priority principle.</font></font></span></font></p>
+<p style="margin-left: 0.1cm; orphans: 0">&nbsp;</p>
+<p style="margin-left: 0.1cm; orphans: 0"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">At
+this point, we have completed the market rules and the four market
+participants, and converted these settings into code (see the
+program:&nbsp;main_ca_3.0.4.py&nbsp;). After setting different
+parameters and running, we can get the output shown in
+Figures&nbsp;1&nbsp;and&nbsp;2.&nbsp;In order to observe the
+operation of the market, we added&nbsp;5&nbsp;sub-graphs:
+Sub-graph&nbsp;1&nbsp;is the change of stock price&nbsp;with
+trading&nbsp;days and the trading volume at the bottom;
+Sub-graph&nbsp;2&nbsp;is the change of the average number of
+positions held by different participants; Sub-graph&nbsp;3&nbsp;is
+the change of the average cash held by different participants;
+Sub-graph&nbsp;4&nbsp;is the change of the average assets of
+different participants; Sub-graph&nbsp;5&nbsp;shows the change of the
+assets of trend investors with different&nbsp;MA&nbsp;cycles over
+time.</span></font></font></p>
+<p style="margin-left: 0.1cm; orphans: 0">&nbsp;</p>
+<p style="margin-left: 0.1cm; orphans: 0"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">By
+setting different parameters, we can see different operating results.
+Through repeated simulations, we can initially observe the following
+phenomena:</span></font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.74cm"><font face="Liberation Serif, serif"><span lang="en-US">1.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">From
+the beginning of the test, the stock price will basically fluctuate
+around the real value of the stock in the short and medium term
+(similar to what is described in the textbook); but when the
+simulation time is extended, the stock price and the real value may
+sometimes be separated (we will show and analyze it later). In the
+words of Graham, the father of value investing:&nbsp;&quot;&nbsp;In
+the short term, the stock market is a voting machine; but in the long
+term, it is a weighing machine.&nbsp;&quot;</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.74cm"><font face="Liberation Serif, serif"><span lang="en-US">2.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">If
+the real value of a stock changes suddenly, the stock price will also
+change accordingly;</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.74cm"><font face="Liberation Serif, serif"><span lang="en-US">3.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">The
+stock price fluctuations show obvious periodic oscillations, and the
+observed fluctuation cycle is about&nbsp;25-30&nbsp;days;</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.74cm"><font face="Liberation Serif, serif"><span lang="en-US">4.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Compared
+with other investors, value investors will have better and more
+stable returns;</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.74cm"><font face="Liberation Serif, serif"><span lang="en-US">5.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">The
+assets of those who chase rising prices and sell falling prices will
+slowly disappear over time;</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.74cm"><font face="Liberation Serif, serif"><span lang="en-US">6.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">The
+asset changes of trend investors and random investors are similar;</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.74cm"><font face="Liberation Serif, serif"><span lang="en-US">7.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">No
+matter which cycle the trend investors use, the asset changes are not
+much different;</font></font></span></font></p>
+<p style="margin-left: 0.1cm; orphans: 0"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">If
+you are interested, you can download the project program
+(&nbsp;main_ca_3.0.4.py&nbsp;) to observe the operation.</span></font></font></p>
+<p align="center" style="margin-left: 1.16cm; orphans: 3"><img src="StockGame.files/StockGame7113.png" name="图像2" align="bottom" width="437" height="381" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Fig.1</span></font></font></p>
+<p align="center" style="margin-left: 1.16cm; orphans: 3"><img src="StockGame.files/StockGame7121.png" name="图像3" align="bottom" width="474" height="435" border="0"/>
+
+&nbsp;</p>
+<p align="center" style="margin-left: 1.16cm; orphans: 3"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Fig.2</span></font></font></p>
+<p>&nbsp;</p>
+<p style="text-indent: -0.52cm; margin-left: 0.5cm"><font face="Liberation Serif, serif"><span lang="en-US">II.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt"><b>Market
+Participants</b></font></font></span></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">In
+the previous chapter, we took the first step and built a stock market
+model with four types of investors and implemented simulated trading.
+In the output results, we can see the simulated stock market
+fluctuations. In this chapter, we will discuss the role of the four
+participants in the stock market. For this purpose, I updated the
+program (&nbsp;main_ca_3.0.5.py&nbsp;). In this version, each
+investor can set different numbers, different initial holdings and
+fund status.</span></font></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Let's
+first look at the situation where all four types of investors exist
+in the market. The number of each type of investor is set to&nbsp;100&nbsp;,
+the initial holding&nbsp;is 100&nbsp;shares, and the initial capital
+is&nbsp;10,000&nbsp;yuan. The test period is&nbsp;1,000&nbsp;days.
+The market value random number seed is set to&nbsp;2100&nbsp;.</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame7921.png" name="图像4" align="bottom" width="554" height="103" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Fig.3</span></font></font></p>
+<p>&nbsp;</p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">The
+second case is the lack of value investors (the number of value
+investors is set to&nbsp;0&nbsp;). Small pointed top and big round
+bottom, does it look familiar?</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame8087.png" name="图像5" align="bottom" width="554" height="101" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Fig.4</span></font></font></p>
+<p>&nbsp;</p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">The
+third situation is the lack of people who buy high and sell low (&nbsp;the
+number of people who&nbsp;buy high and sell low is set to&nbsp;0&nbsp;).</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame8229.png" name="图像6" align="bottom" width="554" height="100" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Fig.5</span></font></font></p>
+<p>&nbsp;</p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">The
+fourth type is the situation where there is a lack of trend investors
+( the number of&nbsp;trend&nbsp;investors is set to&nbsp;0&nbsp;).</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame8360.png" name="图像7" align="bottom" width="554" height="100" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Fig.6</span></font></font></p>
+<p>&nbsp;</p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">The
+fifth is the case where there is a lack of random traders (the number
+of random traders is set to&nbsp;0&nbsp;).</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame8477.png" name="图像8" align="bottom" width="554" height="99" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Fig.7&nbsp;(Note:
+The market value random number seed is set to&nbsp;2100&nbsp;)</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame8545.png" name="图像9" align="bottom" width="554" height="103" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Fig.8&nbsp;(Note:
+The market value random number seed is set to&nbsp;3100&nbsp;)</span></font></font></p>
+<p>&nbsp;</p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Haha,
+looking at Figures&nbsp;7&nbsp;and&nbsp;8,&nbsp;it seems that a
+market without retail investors (random investors) cannot be played,
+and it is a market without vitality. We tested other combinations
+without random investors, and the situation is the same. Can we draw
+a conclusion that retail investors are a necessary guarantee for
+maintaining the normal operation of the stock market?</span></font></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">The
+fifth type is the case where there are only value investors and
+random traders (the number of the other two types of investors is set
+to&nbsp;0&nbsp;).</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame9134.png" name="图像10" align="bottom" width="554" height="104" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Fig.9</span></font></font></p>
+<p>&nbsp;</p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">The
+sixth type is the situation where there are only investors who chase
+ups and downs and random traders (the number of the other two types
+of investors is set to&nbsp;0&nbsp;). It is another small peak and a
+large round bottom.</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame9364.png" name="图像11" align="bottom" width="554" height="99" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Fig.10</font></font>​</span></font></p>
+<p>&nbsp;</p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">The
+seventh is the situation where there are only trend investors and
+random traders (the number of the other two types of investors is set
+to&nbsp;0&nbsp;).</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame9524.png" name="图像12" align="bottom" width="554" height="103" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Fig.11</font></font>​</span></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Through
+the above simulation observations, we have obtained some preliminary
+conclusions:</span></font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.64cm"><font face="Liberation Serif, serif"><span lang="en-US">1.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Value
+investors are the cornerstone of the stock market and serve as&nbsp;a
+stabilizing anchor&nbsp;;</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.64cm"><font face="Liberation Serif, serif"><span lang="en-US">2.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Those
+who chase rising and falling prices will amplify market fluctuations.
+Due to their existence, the stock market may develop in an extreme
+direction. They are synonymous with greed and fear;</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.64cm"><font face="Liberation Serif, serif"><span lang="en-US">3.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Trend
+investors have relatively weak influence on the market;</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.64cm"><font face="Liberation Serif, serif"><span lang="en-US">4.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Random
+traders are a necessary component of the market and will maintain the
+normal and healthy development of the stock market.</font></font></span></font></p>
+<p>&nbsp;</p>
+<p style="text-indent: -0.52cm; margin-left: 0.5cm"><font face="Liberation Serif, serif"><span lang="en-US">III.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt"><b>A
+wider variety of market participants</b></font></font></span></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">In&nbsp;main_ca_3.0.7.py&nbsp;,
+we added &quot;Never Stop Loss Investors&quot;, which is a group that
+is common in the actual market. They hate losses. They may buy stocks
+at any time. When the stock price rises, they will sell after making
+a profit. But when there is a floating loss, they will not sell, but
+hold on until the stock returns to the purchase price. During&nbsp;the
+process of holding on&nbsp;, they often say: &quot;As long as the
+stock price rises back, I will sell it immediately and never buy
+stocks again.&quot; In the program, we set it like this:</span></font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.64cm"><font face="Liberation Serif, serif"><span lang="en-US">1.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Buying
+strategy:</font></font></span></font></p>
+<p style="text-indent: -0.93cm; margin-left: 1.71cm"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">When
+not holding a position, there is a certain probability (default&nbsp;5%&nbsp;)
+to buy a full position</font></font></span></font></p>
+<p style="text-indent: -0.93cm; margin-left: 1.71cm"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">When
+buying, an order will beplaced at a price slightly higher&nbsp;than
+the current price ( 1.01 times) to increase the probability of a
+transaction</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.64cm"><font face="Liberation Serif, serif"><span lang="en-US">2.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Position
+management: Once you buy, if the stock price is lower than the
+purchase price (i.e. floating loss), you will keep holding it without
+stopping the loss. You can completely rely on holding stocks and
+waiting to cope with losses.</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.64cm"><font face="Liberation Serif, serif"><span lang="en-US">3.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Selling
+strategy:</font></font></span></font></p>
+<p style="text-indent: -0.93cm; margin-left: 1.71cm"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Only
+consider selling when the stock price rises above the purchase price</font></font></span></font></p>
+<p style="text-indent: -0.93cm; margin-left: 1.71cm"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">When</font></font>&nbsp;&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">the
+stock price is in the profit range (&nbsp;5%-50%&nbsp;), there is a
+certain probability (default&nbsp;50%&nbsp;) to sell</font></font></span></font></p>
+<p align="center"><img src="StockGame.files/StockGame11370.png" name="图像13" align="bottom" width="494" height="678" border="0"/>
+
+&nbsp;&nbsp;&nbsp;&nbsp;</p>
+<p align="center"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Fig.12</font></font>​</span></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Figure&nbsp;12&nbsp;shows
+the operation of the market simulation with the addition of &quot;Never
+Stop Loss Investors&quot; (Note: the number of investors and the
+initial settings of funds in the above simulation are different). In
+this figure, we can observe some phenomena:</span></font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.64cm"><font face="Liberation Serif, serif"><span lang="en-US">1.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Under
+normal circumstances, stock prices fluctuate around the real value of
+the stock; when the real value changes, the stock price will follow
+the real value.</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.64cm"><font face="Liberation Serif, serif"><span lang="en-US">2.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">In
+some cases (in the red box), the price fluctuates more significantly.
+It is speculated that the occurrence of this phenomenon should be
+related to the dominant force in the market: from the original
+dominance of value investors&nbsp;to the dominance of those who chase
+ups&nbsp;and downs. According to simulation observations, after the
+value investors run out of funds or clear their stocks, the market
+environment does not meet the trading conditions of value investors,
+and they cannot participate in market transactions. At this time,
+other forces in the market will play a dominant role, and the change
+pattern of stock prices will be different from before.</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.64cm"><font face="Liberation Serif, serif"><span lang="en-US">3.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">In
+this simulated market, value investors and trend traders have a
+greater chance&nbsp;of outperforming&nbsp;other investors, and the
+returns for value investors are more obvious.</font></font></span></font></p>
+<p>&nbsp;</p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">In&nbsp;main_ca_3.0.8.py&nbsp;,
+we added another common group of traders in the market -
+&quot;bottom-picking traders&quot;. We assume that this type of
+traders has the following operating strategies:</span></font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.64cm"><font face="Liberation Serif, serif"><span lang="en-US">1.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Buying
+strategy:</font></font></span></font></p>
+<p style="text-indent: -0.93cm; margin-left: 1.71cm"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">The
+observation period is&nbsp;100&nbsp;days, and sufficient price
+history data is required</font></font></span></font></p>
+<p style="text-indent: -0.93cm; margin-left: 1.71cm"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Calculate
+the decline from&nbsp;the highest&nbsp;in&nbsp;100&nbsp;days</font></font></span></font></p>
+<p style="text-indent: -0.93cm; margin-left: 1.71cm"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">When
+the decline exceeds a certain percentage (randomly set&nbsp;between
+5%-15%&nbsp;), start considering buying</font></font></span></font></p>
+<p style="text-indent: -0.93cm; margin-left: 1.71cm"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">The
+buy volume is increased in a step-by-step manner: the number
+of&nbsp;step_drops&nbsp;(randomly set&nbsp;between 5%-15%&nbsp;) is
+calculated. The deeper the drop, the higher the buy ratio;</font></font></span></font></p>
+<p style="text-indent: -0.93cm; margin-left: 1.71cm"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">The
+single purchase ratio starts from&nbsp;10%&nbsp;, and increases
+by&nbsp;10%&nbsp;for each&nbsp;step down</font></font></span></font></p>
+<p style="text-indent: -0.93cm; margin-left: 1.71cm"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Maximum
+cash usage:&nbsp;80%</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.64cm"><font face="Liberation Serif, serif"><span lang="en-US">2.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Selling
+strategy:</font></font></span></font></p>
+<p style="text-indent: -0.93cm; margin-left: 1.71cm"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">When</font></font>&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">holding
+stocks and the current price relative to the average cost reaches the
+profit target (randomly set&nbsp;between 10%-50%&nbsp;), adopt a
+full-position selling strategy.</font></font></span></font></p>
+<p align="center"><img src="StockGame.files/StockGame13530.png" name="图像14" align="bottom" width="424" height="290" border="0"/>
+
+&nbsp;</p>
+<p align="center"><img src="StockGame.files/StockGame13532.png" name="图像15" align="bottom" width="415" height="202" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Fig.13</font></font>​</span></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">The
+running results are shown in Figure&nbsp;13.&nbsp;Bottom-picking
+investors seem to have better returns. Figure&nbsp;14&nbsp;below is a
+simulation run without bottom-picking traders under the same
+parameters. We found that the addition of bottom-picking investors
+weakened the phenomenon of &quot;stock prices fluctuating around the
+real value of stocks&quot;. After multiple simulations, we seem to be
+able to draw a preliminary conclusion: the greater the proportion of
+bottom-picking investors, the lower the correlation between stock
+prices and real value.</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame14076.png" name="图像16" align="bottom" width="476" height="102" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Fig.14</font></font>​</span></font></p>
+<p>&nbsp;</p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">We
+have introduced two types of investors above. You can also add more
+different types of investors according to your own ideas and simulate
+the impact of these investors on the market, as well as the changes
+and fluctuations of the investors' own assets.</span></font></font></p>
+<p>&nbsp;</p>
+<p style="text-indent: -0.52cm; margin-left: 0.5cm"><font face="Liberation Serif, serif"><span lang="en-US">IV.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt"><b>Formation
+and Causes of Fluctuation</b></font></font></span></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Looking
+back at the simulations we did earlier, we can observe significant
+volatility, which we will discuss in this section.</span></font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 0.64cm"><font face="Liberation Serif, serif"><span lang="en-US">1.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">The
+impact of market participants on volatility</font></font></span></font></p>
+<p style="margin-left: 0.78cm; orphans: 2"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">To
+simplify the analysis, we return to the market with only four
+investors (&nbsp;main_ca_3.0.5.py&nbsp;). After running, we can
+observe volatility. Through the previous simulation, we see the
+following phenomena (using default parameters):</span></font></font></p>
+<p style="text-indent: -0.93cm; margin-left: 1.71cm"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Generally,
+we can observe&nbsp;a fluctuation cycle of 25-30&nbsp;days (as shown
+in Figures&nbsp;1&nbsp;and&nbsp;2&nbsp;)</font></font></span></font></p>
+<p style="text-indent: -0.93cm; margin-left: 1.71cm"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">When</font></font>&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">value
+investors reduce their market participation, larger and stronger
+market fluctuations will occur (longer cycles and larger volatility).</font></font></span></font></p>
+<p style="text-indent: -0.93cm; margin-left: 1.71cm"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">In
+extreme cases (as shown in Figure&nbsp;4&nbsp;), when value
+investment participation is completely lost, long-term huge
+fluctuations will occur, with a cycle of up to&nbsp;300&nbsp;days,
+and the high point of the oscillation amplitude reaching&nbsp;2.5-3&nbsp;times
+the initial price, and the low point reaching&nbsp;30-50%&nbsp;of the
+initial price .</font></font></span></font></p>
+<p>&nbsp;</p>
+<p style="text-indent: -0.64cm; margin-left: 0.64cm"><font face="Liberation Serif, serif"><span lang="en-US">2.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">The
+impact of investor behavior parameters on volatility:</font></font></span></font></p>
+<p style="text-indent: -0.93cm; margin-left: 1.71cm"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">The
+size of the valuation differences among value investors:</font></font></span></font></p>
+<p style="margin-left: 1.55cm; orphans: 4"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Under
+normal market conditions,&nbsp;95&nbsp;%&nbsp;of the institutions’
+valuations typically fall within a range of&nbsp;15%-50%&nbsp;above
+or below the median , depending on the type of stock and market
+volatility:</span></font></font></p>
+<p style="text-indent: -0.78cm; margin-left: 2.33cm"><font face="Liberation Serif, serif"><span lang="en-US"><font face="Walbaum Text"><font size="2" style="font-size: 11pt">*&nbsp;</font></font>​<font face="等线"><font size="2" style="font-size: 11pt">Stable&nbsp;assets:&nbsp;15%-25%&nbsp;;</font></font></span></font></p>
+<p style="text-indent: -0.78cm; margin-left: 2.33cm"><font face="Liberation Serif, serif"><span lang="en-US"><font face="Walbaum Text"><font size="2" style="font-size: 11pt">*&nbsp;</font></font><font face="等线"><font size="2" style="font-size: 11pt">Growth&nbsp;assets:&nbsp;30%-50%&nbsp;;</font></font></span></font></p>
+<p style="text-indent: -0.78cm; margin-left: 2.33cm"><font face="Liberation Serif, serif"><span lang="en-US"><font face="Walbaum Text"><font size="2" style="font-size: 11pt">*&nbsp;</font></font><font face="等线"><font size="2" style="font-size: 11pt">High-&nbsp;risk
+assets:&nbsp;60%+&nbsp;.</font></font></span></font></p>
+<p style="margin-left: 1.55cm; orphans: 4"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Note:
+The above information is queried via&nbsp;grok&nbsp;3, and the
+accuracy of the data is yet to be determined.</span></font></font></p>
+<p style="margin-left: 1.55cm; orphans: 4"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Figure&nbsp;15&nbsp;shows
+the impact of different standard deviations of the value investor’s
+valuation error (&nbsp;estimation_error&nbsp;) on volatility. From
+top to bottom, they are:&nbsp;0.1&nbsp;,&nbsp;0.25&nbsp;,&nbsp;0.5&nbsp;,
+and there are obvious differences in the cycle and volatility.</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame16085.png" name="图像17" align="bottom" width="471" height="91" border="0"/>
+
+&nbsp;</p>
+<p align="center"><img src="StockGame.files/StockGame16087.png" name="图像18" align="bottom" width="469" height="100" border="0"/>
+
+&nbsp;</p>
+<p align="center"><img src="StockGame.files/StockGame16089.png" name="图像19" align="bottom" width="472" height="93" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Fig.15</font></font>​</span></font></p>
+<p>&nbsp;</p>
+<p style="text-indent: -0.93cm; margin-left: 1.71cm"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Observation
+period for those who chase ups and downs:</font></font></span></font></p>
+<p style="margin-left: 1.55cm; orphans: 4"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Figure&nbsp;16&nbsp;shows
+the impact of different observation period settings on volatility for
+those who chase ups and downs. From top to bottom, there are three
+cases:&nbsp;3&nbsp;,&nbsp;10&nbsp;, and&nbsp;20.&nbsp;The&nbsp;periods
+are significantly different, while the volatility remains basically
+unchanged.</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame16423.png" name="图像20" align="bottom" width="468" height="84" border="0"/>
+
+&nbsp;</p>
+<p align="center"><img src="StockGame.files/StockGame16425.png" name="图像21" align="bottom" width="468" height="86" border="0"/>
+
+&nbsp;</p>
+<p align="center"><img src="StockGame.files/StockGame16427.png" name="图像22" align="bottom" width="467" height="83" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Fig.16</font></font>​</span></font></p>
+<p>&nbsp;</p>
+<p><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">3.</font></font>&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">Changes
+of volatility over time:</font></font></span></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">When
+we extend the trading time (to&nbsp;8,000&nbsp;trading days), as
+shown in the red circle in Figure&nbsp;17&nbsp;, the fluctuation
+pattern of the stock price will change: the stock price no longer
+changes with the change of the real value, the periodicity of the
+fluctuation becomes weaker, and the fluctuation range becomes
+smaller. The reason should be attributed to the following: because
+those who chase the rise and sell the fall, their assets (including
+holdings and cash) will be gradually consumed over time, and the
+impact on the market price will gradually decrease. At this time,
+even if the real value of the stock rises or falls sharply, it is
+difficult for the stock price to follow the real value, and it
+becomes lifeless.</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame17197.png" name="图像23" align="bottom" width="477" height="344" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Fig.17</font></font>​</span></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">As
+for other factors that affect the frequency and amplitude of
+fluctuations, you can also use the program to conduct further tests.</span></font></font></p>
+<p>&nbsp;</p>
+<p style="text-indent: -0.52cm; margin-left: 0.5cm"><font face="Liberation Serif, serif"><span lang="en-US">V.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt"><b>Market
+Funds</b></font></font></span></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">We
+all know that funds play a very important role in the stock market.
+We will explore this issue in this section.&nbsp;main_ca_3.1.0.py&nbsp;adds
+a function, which is the fund injection and withdrawal function. We
+can observe the changes in the market when funds are injected or
+withdrawn from the market. The program supports injecting or
+withdrawing funds for investors on a specified date, and can operate
+for specific types or all investors, and can adjust funds by fixed
+amount or proportion.</span></font></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Let's
+take a look at the performance of the market over 1,000&nbsp;trading
+days after injecting different amounts of funds, with other
+conditions being the same&nbsp;(the random number seed setting for
+the value curve:&nbsp;value_line_seed&nbsp;= 2076&nbsp;):</span></font></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Scenario&nbsp;1&nbsp;:
+No capital injection</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame18113.png" name="图像24" align="bottom" width="554" height="99" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Fig.18</font></font>​</span></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Scenario&nbsp;2&nbsp;:&nbsp;20%&nbsp;of
+all investors’&nbsp;funds are injected on the&nbsp;300th day</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame18194.png" name="图像25" align="bottom" width="554" height="100" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Fig.19</font></font>​</span></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Scenario&nbsp;3&nbsp;:&nbsp;50%&nbsp;of
+all investors are injected on day&nbsp;300.&nbsp;Note the large
+change at the tail.</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame18298.png" name="图像26" align="bottom" width="554" height="100" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Fig&nbsp;.
+20</span></font></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Scenario&nbsp;4&nbsp;:&nbsp;100%&nbsp;funding
+for all investors on the&nbsp;300th&nbsp;day .</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame18372.png" name="图像27" align="bottom" width="554" height="103" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Fig.21</font></font>​</span></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Scenario&nbsp;5&nbsp;:
+On the&nbsp;300th day,&nbsp;120%&nbsp;of funds are injected into all
+investors&nbsp;.</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame18461.png" name="图像28" align="bottom" width="554" height="103" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Fig&nbsp;.
+22</span></font></font></p>
+<p>&nbsp;<font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Scenario&nbsp;6&nbsp;:&nbsp;150%&nbsp;injection
+of funds&nbsp;for all investors on the&nbsp;300th day</span></font></font></span></font></p>
+<p align="center"><img src="StockGame.files/StockGame18545.png" name="图像29" align="bottom" width="554" height="100" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Fig.23</font></font>​</span></font></p>
+<p>&nbsp;<font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Scenario&nbsp;7&nbsp;:&nbsp;200%&nbsp;injection
+of funds&nbsp;for all investors on the&nbsp;300th day</span></font></font></span></font></p>
+<p align="center"><img src="StockGame.files/StockGame18628.png" name="图像30" align="bottom" width="554" height="99" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Fig.24</font></font>​</span></font></p>
+<p>&nbsp;</p>
+<p align="center"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Scenario&nbsp;8&nbsp;:&nbsp;250%&nbsp;injection
+of funds&nbsp;for all investors on the&nbsp;300th day</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame18712.png" name="图像31" align="bottom" width="554" height="101" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Fig.25</font></font>​</span></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Scenario&nbsp;9&nbsp;:
+On the&nbsp;300th&nbsp;day, only&nbsp;230%&nbsp;of funds were
+injected into the market for those who chased the rise and fell.</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame18842.png" name="图像32" align="bottom" width="554" height="101" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Fig.26</font></font>​</span></font></p>
+<p>&nbsp;</p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Next,
+let's take a look at the market's performance over 1,000&nbsp;trading
+days after different amounts of funds were drawn, with other
+conditions being the same&nbsp;(the value curve's random number seed
+setting:&nbsp;value_line_seed&nbsp;= 2076&nbsp;):</span></font></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Scenario&nbsp;1&nbsp;:&nbsp;20%&nbsp;of
+all traders’&nbsp;funds are taken on the&nbsp;300th day</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame19151.png" name="图像33" align="bottom" width="554" height="101" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Fig&nbsp;.
+27</span></font></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Scenario&nbsp;2&nbsp;:
+Take&nbsp;50%&nbsp;of all traders’&nbsp;funds on day&nbsp;300</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame19217.png" name="图像34" align="bottom" width="554" height="101" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Fig.28</font></font>​</span></font></p>
+<p>&nbsp;</p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Scenario&nbsp;3&nbsp;:&nbsp;50%&nbsp;of
+all traders’&nbsp;funds are withdrawn on the&nbsp;300th day</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame19299.png" name="图像35" align="bottom" width="554" height="100" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Fig.29</font></font>​</span></font></p>
+<p>&nbsp;</p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Scenario&nbsp;4&nbsp;:&nbsp;65%&nbsp;of
+all traders’&nbsp;funds are taken away on day&nbsp;300</span></font></font></p>
+<p align="center"><img src="StockGame.files/StockGame19376.png" name="图像36" align="bottom" width="554" height="101" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Fig.30</font></font>​</span></font></p>
+<p>&nbsp;</p>
+<p><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">After
+repeated tests and observations, my guess is that&nbsp;</font></font><font face="等线"><font size="2" style="font-size: 11pt"><u>whether
+the stock market can fluctuate stably around the value line is more
+closely related to the financial balance between market participants,
+rather than just the amount of funds</u></font></font>&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">.</font></font></span></font></p>
+<p>&nbsp;</p>
+<p><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">As
+we all know, commissions, stamp duties and other fees charged in
+transactions are transaction costs for investors, and are one of the
+factors that affect the market, affecting the long-term returns of
+individual investors, especially for high-frequency traders. However,
+from the perspective of the entire market, from this model, the
+impact on stock market fluctuations is not significant. It may be
+that the psychological impact is greater than the actual impact. The
+following two&nbsp;figures&nbsp;compare the short-term and long-term
+respectively. In each pair of figures, the buying cost of the upper
+figure is set at&nbsp;0.1%&nbsp;and the selling cost is set at&nbsp;0.2%&nbsp;;
+the buying cost of the lower figure is set at&nbsp;1%&nbsp;and the
+selling cost is set at&nbsp;2%&nbsp;. It is assumed that
+these&nbsp;</font></font><font face="等线"><font size="2" style="font-size: 11pt"><u>transaction
+costs are fair to the participants and will not destroy the balance
+relationship on the capital side</u></font></font>&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">.</font></font></span></font></p>
+<p align="center"><img src="StockGame.files/StockGame20516.png" name="图像37" align="bottom" width="487" height="86" border="0"/>
+
+&nbsp;</p>
+<p align="center"><img src="StockGame.files/StockGame20518.png" name="图像38" align="bottom" width="488" height="89" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Fig.31</font></font>​</span></font></p>
+<p align="center"><img src="StockGame.files/StockGame20528.png" name="图像39" align="bottom" width="554" height="101" border="0"/>
+
+&nbsp;</p>
+<p align="center"><img src="StockGame.files/StockGame20530.png" name="图像40" align="bottom" width="554" height="103" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Fig.32</font></font>​</span></font></p>
+<p>&nbsp;</p>
+<p style="text-indent: -0.52cm; margin-left: 0.5cm"><font face="Liberation Serif, serif"><span lang="en-US">VI.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt"><b>Information
+Transmission and Message Investors</b></font></font></span></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">There
+are all kinds of news in the market, both good and bad news. These
+news will affect the value of stocks, causing people to re-evaluate
+stocks, which in turn affects stock trends. Some investors pay close
+attention to these news, while others don't care at all. Some get the
+news in advance through internal channels, some get it from public
+channels afterwards, and some have no way of knowing. Of course, some
+news are true and some are false. Some people are deceived, while
+others use news to control stock prices.</span></font></font></p>
+<p><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">In
+this model, we can regard the change of real value as good or bad
+news. Assuming that there are investors who use information to trade,
+and&nbsp;</font></font><font face="等线"><font size="2" style="font-size: 11pt"><u>news
+investors</u></font></font>&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">use
+public information to trade, we have made the following
+settings&nbsp;in&nbsp;the program :</font></font></span></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">-
+Timing of information acquisition: The direction of change will be
+known&nbsp;1-5&nbsp;days after the actual value of the stock
+changes&nbsp;.</span></font></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">-&nbsp;Trading
+direction: Buy all positions when the value rises, and sell all
+positions when the value falls.</span></font></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">-&nbsp;Position
+holding strategy: hold the position after purchase until&nbsp;15%&nbsp;floating
+profit,&nbsp;20%&nbsp;floating loss or sell after&nbsp;30&nbsp;days
+(these parameters are adjustable).</span></font></font></p>
+<p><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">After
+running&nbsp;main_ca_3.2.1.1.py&nbsp;, you can see&nbsp;</font></font><font face="等线"><font size="2" style="font-size: 11pt"><u>the
+market performance of news investors</u></font></font>&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">:</font></font></span></font></p>
+<p align="center"><img src="StockGame.files/StockGame21847.png" name="图像41" align="bottom" width="500" height="362" border="0"/>
+
+&nbsp;</p>
+<p align="center"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Fig.33</font></font>​</span></font></p>
+<p>&nbsp;</p>
+<p style="text-indent: -0.52cm; margin-left: 0.5cm"><font face="Liberation Serif, serif"><span lang="en-US">VII.&nbsp;<font face="等线"><font size="2" style="font-size: 11pt"><b>Summary</b></font></font></span></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">So
+far, we seem to have a relatively complete trading simulation system.
+In this simulation system:</span></font></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">1.
+Based on the behavioral characteristics of traders, we have added
+several types of investors, including: value investors, trend
+investors, up-and-down investors, random investors, never-stop-loss
+investors, bottom-picking investors, and news investors.</span></font></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">2.
+In terms of trading, we only used a call auction to simulate daily
+trading, generate price sequences and trading volume sequences, and
+observe market changes.</span></font></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">3.
+From the output of the simulation results, we can observe the
+fluctuations in stock prices and trading volumes, as well as the
+average changes in assets, cash, and holdings of each type of
+investor.</span></font></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">4.
+We have added the function of injecting or withdrawing funds into the
+market, and added the transaction fee information, so that we can
+observe the impact of overall market capital changes on transactions.</span></font></font></p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">The
+above model is built on the basis of my hobby of exploring the laws
+of market operation and my superficial understanding of economic
+theory. It seems to reflect the laws of the market to a certain
+extent. Some of them&nbsp;fit&nbsp;the market phenomena, while others
+do not. It seems that some laws can be summarized, but they are a bit
+specious. In view of my limited academic ability and limited
+cognition, the model is too simplified and has too many assumptions
+based on daily experience. Therefore, the model can only be regarded
+as an interesting experimental game. In addition, my programming
+ability is also relatively limited. Perhaps a flaw in a code may
+overturn all the conclusions. The number of running tests of this
+model under various conditions is not enough, and there is not enough
+data to summarize. Some of the conclusions involved in the article
+can only be called conjectures, which may not be enough to fully
+explain and understand the market. Therefore, I open source the
+various evolutionary code versions here for like-minded people to
+play with and improve together.</span></font></font></p>
+<p>&nbsp;</p>
+<p><font face="等线"><font size="2" style="font-size: 11pt"><span lang="en-US">Yichong
+&nbsp;&nbsp;(Julian72cn@hotmail.com)</span></font></font></p>
+<p><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Completed&nbsp;on&nbsp;May&nbsp;1&nbsp;,&nbsp;2025</font></font>​</span></font></p>
+<p>&nbsp;</p>
+</body>
+</html>
