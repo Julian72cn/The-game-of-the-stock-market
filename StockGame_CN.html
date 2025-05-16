@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<title></title>
+	<meta name="generator" content="LibreOffice 25.2.3.2 (Windows)"/>
+	<meta name="created" content="00:00:00"/>
+	<meta name="changed" content="2025-05-16T11:38:03.888768800"/>
+	<meta name="Originator" content="Microsoft Word 14"/>
+	<meta name="ProgId" content="Word.Document"/>
+	<style type="text/css">
+		p { color: #000000 }
+		body {
+			width: 800px;
+			margin-left: auto;
+			margin-right: auto;
+		}
+	</style>
+</head>
+<body lang="zh-CN" text="#000000" dir="ltr"><p class="msonormal" align="center" style="orphans: 0">
+<font face="等线"><font size="4" style="font-size: 16pt"><b>股市的游戏</b></font></font></p>
+<p class="msonormal" align="center" style="orphans: 0">&nbsp;</p>
+<p class="msonormal" style="text-indent: 0.75cm; orphans: 1"><img src="StockGame_CN.files/StockGame_CN7.png" name="图像1" align="left" hspace="12" width="155" height="220" border="0"/> 
+<font face="等线"><font size="2" style="font-size: 11pt">十多年前，在看过一本书（书名是
+《金融心理学》）后，就在想一个问题，既然股市的价格波动是由股市参与者（投资者）的行为共同作用下形成的，那我们是不是能够用计算机通过模拟这
+些参与者的行为来实现股市的模拟呢。在这之后这个想法一直没有遗忘，时不时会在脑子里出现，但具体该如何做却一直没有成型，还有就是感觉工作量过
+于太大，代码开发有些复杂，直到最近</font></font>……<font face="等线"><font size="2" style="font-size: 11pt">，大模型的出现使一个能变成一个团
+队，让我能够快速将想法变成代码，从而将项目变成现实。下面我们就开始我们的游戏</font></font>——<font face="等线"><font size="2" style="font-size: 11pt">构建我们的模型：</font></font></p>
+<p class="msonormal" align="center" style="orphans: 0">&nbsp;</p>
+<p style="text-indent: 0cm; margin-left: 0.78cm; orphans: 0"> 
+一、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt"><b>市场参与者和市场交易</b></font></font></p>
+<p class="msonormal" align="left" style="text-indent: 0.75cm; orphans: 1">
+<font face="等线"><font size="2" style="font-size: 11pt">市场参与者可以根据多种维度进行分
+类，比如可以按投资周期来分，可以分为短线、中线、长线投资者。可以按资金规模分成散户（个人投资者）、大户（高净值个人）、机构投资者。我们也
+可以按投资风格进行分类，如价值型投资者、成长型投资者、趋势型投资者、逆向投资者等。按交易策略分有技术分析派、基本面分析派、量化交易者等
+等。林林总总，不一而足。</font></font></p>
+<p class="msonormal" align="left" style="text-indent: 0.75cm; orphans: 1">
+<font face="等线"><font size="2" style="font-size: 11pt">为了方便模拟，这里从用户行为角度
+出发，我们先将市场中的投资者简化为四类：价值投资者、趋势投资者、追涨杀跌者、随机投资者。这四类投资者在实际市场中切实存在，而且很重要的一
+点是我们可以用代码准确的描述出他们的行为。当然仅仅这四类投资者并不能代表真实股市的全部投资者。随着我们后面模拟的逐步深入，我们可以在模拟
+中引入更多的具有一定行为特征的投资者，从而观察他们自身资产的变化和对市场的影响。</font></font></p>
+<p class="msonormal" align="left" style="text-indent: 0.75cm; orphans: 1">
+<font face="等线"><font size="2" style="font-size: 11pt">下面来分别设定一下四种投资者的投
+资行为：</font></font></p>
+<p align="left" style="text-indent: -0.64cm; margin-left: 1.38cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US">1</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">理性的价值投资者：他们仅仅基于自
+身对股票内在价值的估计进行交易。他们具有以下的行为特征：</font></font></p>
+<p align="left" style="text-indent: -0.78cm; margin-left: 2.3cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US">1)&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">当市场价格高于估值时卖出，当市场
+价格低于估值时买入</font></font></p>
+<p align="left" style="text-indent: -0.78cm; margin-left: 2.3cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US">2)&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">交易量与价格偏离程度（百分比）成
+正比；</font></font></p>
+<p align="left" style="text-indent: -0.78cm; margin-left: 2.3cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US">3)&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">我们假设股票会有一个真实价值，这
+个真实价值会时不时以方波的形式发生随机变化，从而模拟某个事件对个股价值的影响（比如现实市场中有利好或利空信息）。</font></font></p>
+<p align="left" style="text-indent: -0.78cm; margin-left: 2.3cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US">4)&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">假设每个价值投资者总能对企业有个
+比较正确的判断，估值会围绕股票真实价值进行正态分布（标准差可以设为真实价值的一个比例，如</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">10%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">），并且所有价值投资者估值的平均
+值等于真实价值。</font></font></p>
+<p align="left" style="text-indent: -0.64cm; margin-left: 1.38cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US">2</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">趋势投资者：趋势投资者也是普遍存
+在的一个群体。我们设定他们有以下的行为特征：</font></font></p>
+<p align="left" style="text-indent: -0.78cm; margin-left: 2.3cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US">1)&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">为简化起见，我们使用移动平均线（</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">MA</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">）作为交易信号，当价格上穿</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">MA</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">时满仓买入，下穿</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">MA</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">时全仓卖出；</font></font></p>
+<p align="left" style="text-indent: -0.78cm; margin-left: 2.3cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US">2)&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">每个趋势投资者</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">MA</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">周期从</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">[5,
+10, 15, 20, 25, 30, 60, 120]</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">中随机选择，不同投资者使用不同的
+观察周期；</font></font></p>
+<p align="left" style="text-indent: -0.64cm; margin-left: 1.38cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US">3</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">随机交易者：广大散户很大部分可能
+就是这样一种群体，他们没有或没有一定的交易策略或交易原则，他们可能会跟着直觉买入或者卖出，他们遇到同样的情况有时候这样做、有时候那样做。
+但他们活跃和繁荣了市场。</font></font></p>
+<p align="left" style="text-indent: -0.64cm; margin-left: 1.38cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US">4</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">追涨杀跌者：追涨杀跌也是在股市中
+常听到的名词，这些投资者股票涨得越快或者涨得越高越兴奋，越有买入的冲动；而股票下跌时，跌的越快或跌的越低他们约恐惧，迅速卖出股票。在这里
+我们这样设定：追涨杀跌者观察一定周期内（比如</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">3</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天、</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">5</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天</font></font>……<font face="等线"><font size="2" style="font-size: 11pt">）的股票涨跌速度，买入卖出的比例
+和涨跌速度成正比。</font></font></p>
+<p class="msonormal" align="left" style="text-indent: 0.75cm; orphans: 1">
+<font face="等线"><font size="2" style="font-size: 11pt">接下来，我们参照现实股市的实际情
+况来确定下市场交易的规则。为了简化起见，每日的交易我们忽略日内交易，所以采用集合竞价机制如下（股市每天收盘也是集合竞价结束）：</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 1.38cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">1</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">收集所有投资者的买卖订单；</font></font></p>
+<p align="left" style="text-indent: -0.64cm; margin-left: 1.38cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US">2</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">对订单按价格排序；</font></font></p>
+<p align="left" style="text-indent: -0.64cm; margin-left: 1.38cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US">3</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">寻找能产生最大成交量的价格作为出
+清价；</font></font></p>
+<p align="left" style="text-indent: -0.64cm; margin-left: 1.38cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US">4</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">按价格优先原则执行交易。</font></font></p>
+<p class="msonormal" align="left" style="text-indent: 0.75cm; orphans: 1">
+<font face="等线"><font size="2" style="font-size: 11pt">到这里，我们就已经完成了市场规则
+和四种市场参与者设定，将这些设定转换为代码（程序见：</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">main_ca_3.0.4.py</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">）。设定不同的参数运行之后，我们
+可以得到如图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">1</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">和图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">2</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">的输出。为观察市场运行情况，我们
+添加了</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">5</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">张子图：子图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">1</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">是股价随交易日的变化图以及下部有
+交易量反映；子图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">2</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">是不同参与者平均持仓数量的变化情
+况；子图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">3</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">不同参与者平均持有现金的变化情
+况；子图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">4</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">不同参与者平均资产的变化情况；子
+图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">5</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">表示不同</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">MA</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">周期的趋势投资者的资产随时间的变
+化。</font></font></p>
+<p class="msonormal" align="left" style="text-indent: 0.75cm; orphans: 1">
+<font face="等线"><font size="2" style="font-size: 11pt">通过不同的参数设定，我们可以看到
+不同的运行结果。通过反复的模拟，我们初步可以观察到这样一些现象：</font></font></p>
+<p align="left" style="text-indent: -0.64cm; margin-left: 1.38cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US">1</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">从开始测试开始，中短期内股价基本
+会围绕股票的真实价值上下波动（与教课书上所述相仿）；但当模拟时间延长，有时会发生股价和真实价值脱离的情况（我们在后面会有展示和分析）。用
+价值投资之父格雷厄姆的话来说就是：</font></font>“<font face="等线"><font size="2" style="font-size: 11pt">从短期看，股市是一台投票机；但是
+从长远看，它是一台称重机。</font></font>”</p>
+<p align="left" style="text-indent: -0.64cm; margin-left: 1.38cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US">2</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">股票真实价值突然发生变化，股价也
+会追随股票价值发生相应变化；</font></font></p>
+<p align="left" style="text-indent: -0.64cm; margin-left: 1.38cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US">3</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">股价波动显示明显的周期振荡，观察
+到的波动周期大约为</font></font>&nbsp;<font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">25-30</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天；</font></font></p>
+<p align="left" style="text-indent: -0.64cm; margin-left: 1.38cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US">4</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">相比其他投资者，价值投资者的收益
+会更好一些，也更加稳健；</font></font></p>
+<p align="left" style="text-indent: -0.64cm; margin-left: 1.38cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US">5</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">追涨杀跌者资产会随着时间慢慢流
+失；</font></font></p>
+<p align="left" style="text-indent: -0.64cm; margin-left: 1.38cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US">6</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">趋势投资者和随机投资者资产变化情
+况相接近；</font></font></p>
+<p align="left" style="text-indent: -0.64cm; margin-left: 1.38cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US">7</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">趋势投资者无论用哪个采用那个周期
+操作，资产变化情况相差不大；</font></font></p>
+<p class="msonormal" align="left" style="margin-left: 0.75cm; orphans: 0">
+<font face="等线"><font size="2" style="font-size: 11pt">大家有兴趣可以下载运行项目程序（</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">main_ca_3.0.4.py</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">）进行运行观察。</font></font></p>
+<p class="msonormal" align="center" style="text-indent: 0.75cm; orphans: 1">
+<img src="StockGame_CN.files/StockGame_CN2019.png" name="图像2" align="bottom" width="506" height="437" border="0"/>
+&nbsp;</p>
+<p class="msonormal" align="center" style="text-indent: 0.68cm; orphans: 1">
+<font face="等线"><font size="2" style="font-size: 10pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 10pt">1</font></font></span></font></p>
+<p class="msonormal" align="center" style="text-indent: 0.75cm; orphans: 1">
+<img src="StockGame_CN.files/StockGame_CN2024.png" name="图像3" align="bottom" width="474" height="431" border="0"/>
+&nbsp;</p>
+<p class="msonormal" align="center" style="text-indent: 0.68cm; orphans: 1">
+<font face="等线"><font size="2" style="font-size: 10pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 10pt">2</font></font></span></font></p>
+<p class="msonormal" align="left" style="text-indent: 0.75cm; orphans: 1">&nbsp;
+</p>
+<p style="text-indent: -0.78cm; margin-left: 0.78cm; orphans: 0">二、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt"><b>市场参与者的市场影响</b></font></font></p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">在上一章节中，我们走出了第一步，
+构建了一个由四种投资者参与的股市模型，并实现了模拟交易，在输出结果中，我们可以看到模拟出股市的波动。在这一章节，我们将讨论一下四种参与者
+在股市中起到的作用。为此我更新了程序（</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">main_ca_3.0.5.py</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">），这个版本中每种投资者可以设置
+不同的人数、不同的初始持股和资金状态。</font></font></p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">我们首先来看一下市场中四种投资者
+全部存在的情况，每种投资者数量都设为</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">100</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">，初始持股</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">100</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">股，初始资金</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">10000</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">元。测试周期</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">1000</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天。市场价值随机数种子设为</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">2100</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">。</font></font></p>
+<p align="center" style="orphans: 0"><img src="StockGame_CN.files/StockGame_CN2281.png" name="图像4" align="bottom" width="543" height="101" border="0"/>
+&nbsp;</p>
+<p align="center" style="orphans: 0"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">3</font></font></span></font></p>
+<p align="center" style="orphans: 0">&nbsp;</p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">第二种情况，缺少价值投资者的情况
+（将价值投资者人数设为</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font size="2" style="font-size: 11pt">0</font></span></font><font face="等线"><font size="2" style="font-size: 11pt">）。小尖顶大圆底，是不是在</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">2007</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">年的</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">2015</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">年的</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">A</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">股疯牛出现过？</font></font></p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><img src="StockGame_CN.files/StockGame_CN2349.png" name="图像5" align="bottom" width="548" height="100" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">4</font></font></span></font></p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1">&nbsp;</p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">第三种情况，缺少追涨杀跌者的情况
+（将追涨杀跌者人数设为</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font size="2" style="font-size: 11pt">0</font></span></font><font face="等线"><font size="2" style="font-size: 11pt">）。</font></font></p>
+<p align="center" style="text-indent: 0.78cm; orphans: 2"><img src="StockGame_CN.files/StockGame_CN2386.png" name="图像6" align="bottom" width="545" height="98" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.78cm; orphans: 2"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">5</font></font></span></font></p>
+<p style="text-indent: 0.78cm; orphans: 2">&nbsp;</p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">第四种，缺少趋势投资者的情况（将
+趋势投资者人数设为</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font size="2" style="font-size: 11pt">0</font></span></font><font face="等线"><font size="2" style="font-size: 11pt">）。</font></font></p>
+<p align="center" style="text-indent: 0.78cm; orphans: 2"><img src="StockGame_CN.files/StockGame_CN2421.png" name="图像7" align="bottom" width="546" height="98" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.78cm; orphans: 2"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">6</font></font></span></font></p>
+<p align="center" style="text-indent: 0.78cm; orphans: 2">&nbsp;</p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">第五种，缺少随机交易者的情况（将
+随机交易者人数设为</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font size="2" style="font-size: 11pt">0</font></span></font><font face="等线"><font size="2" style="font-size: 11pt">）。</font></font></p>
+<p align="center" style="text-indent: 0.78cm; orphans: 2"><img src="StockGame_CN.files/StockGame_CN2456.png" name="图像8" align="bottom" width="545" height="98" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.78cm; orphans: 2"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">7
+</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">（注：市场价值随机数种子设为</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">2100</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">）</font></font></p>
+<p align="center" style="text-indent: 0.78cm; orphans: 2">&nbsp;</p>
+<p align="center" style="text-indent: 0.78cm; orphans: 2"><img src="StockGame_CN.files/StockGame_CN2482.png" name="图像9" align="bottom" width="545" height="101" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.78cm; orphans: 2"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">8
+</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">（注：市场价值随机数种子设为</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">3100</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">）</font></font></p>
+<p align="center" style="text-indent: 0.78cm; orphans: 2">&nbsp;</p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">哈哈，看图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">7</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">和图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">8</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">似乎没有散户（随机投资者）的市场
+是玩不下去的，是没有活力的市场。测试了没有随机投资者其他组合，情况也是如此。是不是可以的得出一个结论，散户是维持股市正常运行的必要保证。</font></font></p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">第五种，只有价值投资者和随机交易
+者的情况（将其他两种投资者人数设为</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font size="2" style="font-size: 11pt">0</font></span></font><font face="等线"><font size="2" style="font-size: 11pt">）。</font></font></p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><img src="StockGame_CN.files/StockGame_CN2639.png" name="图像10" align="bottom" width="542" height="102" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">9
+</font></font></span></font>
+</p>
+<p style="text-indent: 0.75cm; orphans: 1">&nbsp;</p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">第六种，只有追涨杀跌者和随机交易
+者的情况（将其他两种投资者人数设为</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font size="2" style="font-size: 11pt">0</font></span></font><font face="等线"><font size="2" style="font-size: 11pt">）。又是小尖顶大圆底。</font></font></p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><img src="StockGame_CN.files/StockGame_CN2692.png" name="图像11" align="bottom" width="549" height="98" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">10</font></font></span></font></p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1">&nbsp;</p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">第七种，只有趋势投资者和随机交易
+者的情况（将其他两种投资者人数设为</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font size="2" style="font-size: 11pt">0</font></span></font><font face="等线"><font size="2" style="font-size: 11pt">）。</font></font></p>
+<p class="msonormal" align="center" style="text-indent: 0.78cm; orphans: 2">
+<img src="StockGame_CN.files/StockGame_CN2736.png" name="图像12" align="bottom" width="544" height="101" border="0"/>
+&nbsp;</p>
+<p class="msonormal" align="center" style="text-indent: 0.78cm; orphans: 2">
+<font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">11</font></font></span></font></p>
+<p class="msonormal" style="text-indent: 0.78cm; orphans: 2"><font face="等线"><font size="2" style="font-size: 11pt">通过上述模拟观察，我们又获得了一
+些初步结论：</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 1.41cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">1</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">价值投资者是股市的基石，起到稳定
+锚点的作用；</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 1.41cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">2</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">追涨杀跌者将会放大市场波动，由于
+他们的存在，股市可能将会向着极端方向发展，他们是贪婪与恐惧的代名词；</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 1.41cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">3</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">趋势投资者对市场的影响相对较弱；</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 1.41cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">4</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">随机交易者是市场的必要组成，将维
+持股市的正常健康发展。</font></font></p>
+<p style="margin-left: 1.41cm; orphans: 0">&nbsp;</p>
+<p style="text-indent: -0.78cm; margin-left: 0.78cm; orphans: 0">三、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt"><b>更多种类的市场参与者</b></font></font></p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">在</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">main_ca_3.0.7.py</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">中，我们加入了</font></font><font size="2" style="font-size: 11pt">“</font><font face="等线"><font size="2" style="font-size: 11pt">永不止损投资者”，这是一个在实际市场中普遍存在的群体，他们厌恶损失。他们可能随时会买入股票，当股票上涨时，他们获得
+盈利后，会卖出。但当有浮亏时，他们不会卖出，而是死扛，直至股票返回到买入价，在死扛过程中，他们经常说的一句话是：“只要股票涨回来，我就马
+上卖出，再也不买股票了”。在程序中，我们这样设定：</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 1.41cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">1</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">买入策略：</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 2.19cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">在未持仓状态下，每次有一定的概率
+（默认</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">5%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">）进行全仓买入</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 2.19cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">买入时会以略高于当前价格（</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">1.01</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">倍）的价格下单，以提高成交概率</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 1.41cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">2</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">持仓管理：一旦买入后，如果股价低
+于买入价格（即浮亏状态），会一直持有不会止损。，完全依靠持股等待来应对亏损。</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 1.41cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">3</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">卖出策略：</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 2.19cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">只有在股价回升到买入价格以上时才
+会考虑卖出</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 2.19cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">当股价处于盈利区间（</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">5%-50%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">）时，有一定的概率（默认</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">50%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">）进行卖出</font></font></p>
+<p style="orphans: 0">&nbsp;</p>
+<p align="center" style="orphans: 0"><img src="StockGame_CN.files/StockGame_CN3261.png" name="图像13" align="bottom" width="503" height="687" border="0"/>
+&nbsp;&nbsp;&nbsp;&nbsp;</p>
+<p align="center" style="orphans: 0"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">12
+</font></font></span></font>
+</p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">12</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">是加入</font></font><font size="2" style="font-size: 11pt">“</font><font face="等线"><font size="2" style="font-size: 11pt">永不止损投资者”的市场模拟的运行情况（注意：上图模拟中的各种投资者的人数、资金的初始设置有所不同）。在这张图中我们
+可以观察到一些现象：</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 1.41cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">1</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">在一般情况下，股票价格围绕股票的
+真实价值做上下波动；真实价值变化后，股价会追随真实价值产生变化，</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 1.41cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">2</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">某些情况下（红色方框内）价格产生
+了更大幅度波动的现象。猜想这种现象的发生应该与市场主导力量有关：从原先的价值投资者主导，变化成由追涨杀跌者主导。据模拟观察，价值投资者资
+金耗尽或者股票清仓后，市场环境未满足价值投资者的交易条件，他们无法参与市场交易，这时市场的其他力量将起到主导作用，股价的变化规律与前不
+同。</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 1.41cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">3</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">价值投资者和趋势交易者在这个模拟
+市场中，有更多的概率跑赢其他投资者，而价值投资者收益更加明显。</font></font></p>
+<p style="text-indent: 0.75cm; orphans: 1">&nbsp;</p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">在</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">main_ca_3.0.8.py</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">中，我们加入了市场常见另一种交易
+者群体</font></font>——“<font face="等线"><font size="2" style="font-size: 11pt">抄底交易者”。我们假设这类交易
+者有以下操作策略：</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 1.41cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">1</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">买入策略：</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 2.19cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">观察周期为</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">100</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天，需要有足够的价格历史数据</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 2.19cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">从</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">100</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天内的最高价计算下跌幅度</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 2.19cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">当下跌幅度超过一定比例（随机设定
+在</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">5%-15%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">之间）时开始考虑买入</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 2.19cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">买入量采用阶梯式增加：计算下跌了
+多少个</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">step_drop</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">（随机设定在</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">5%-15%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">之间），下跌越深，买入比例越高；</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 2.19cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">单次买入比例从</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">10%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">起步，每下跌一个</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">step</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">增加</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">10%</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 2.19cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">最大使用现金的</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">80%</font></font></span></font></p>
+<p style="text-indent: -0.64cm; margin-left: 1.41cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">2</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">卖出策略：</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 2.19cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">当持有股票且当前价格相对于平均成
+本的盈利达到盈利目标（随机设定在</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">10%-50%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">之间）时，采用全仓卖出策略。</font></font></p>
+<p class="msonormal" align="center" style="orphans: 0"><img src="StockGame_CN.files/StockGame_CN3899.png" name="图像14" align="bottom" width="395" height="269" border="0"/>
+&nbsp;</p>
+<p class="msonormal" align="center" style="orphans: 0"><img src="StockGame_CN.files/StockGame_CN3901.png" name="图像15" align="bottom" width="416" height="195" border="0"/>
+&nbsp;</p>
+<p class="msonormal" align="center" style="orphans: 0"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">13</font></font></span></font></p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">运行结果如图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">13</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">所示，抄底投资者似乎有着更好的收
+益。下面图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">14</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">，是相同参数下没有抄底交易者的模
+拟运行情况。我们发现，抄底投资者的加入减弱了</font></font><font size="2" style="font-size: 11pt">“</font><font face="等线"><font size="2" style="font-size: 11pt">股票价格围绕股票的真实价值做上下波动”这一现
+象。多次模拟之后，我们似乎可以得到一个初步的结论：抄底投资者比例越大，股价和真实价值的相关性越低。</font></font></p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><img src="StockGame_CN.files/StockGame_CN4049.png" name="图像16" align="bottom" width="481" height="118" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">14</font></font></span></font></p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1">&nbsp;</p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">以上我们引入了两种投资者，大家也
+可以根据自己的设想加入更多的不同种类的投资者，模拟这些投资者对市场的影响，以及投资者自身资产的变化和波动情况。</font></font></p>
+<p class="msonormal" style="orphans: 0">&nbsp;</p>
+<p style="text-indent: -0.78cm; margin-left: 0.78cm; orphans: 0">四、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt"><b>波动的形成及原因</b></font></font></p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">回顾我们之前做的模拟，我们可以观
+察到明显的波动性，本节将会讨论这个问题。</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 1.41cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">1</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">市场参与者对波动的影响</font></font></p>
+<p style="text-indent: 0.75cm; margin-left: 1.55cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">为了简化分析，我们回到只有四种投
+资者的市场（</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">main_ca_3.0.5.py</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">）。运行之后我们可以观察到波动
+性。通过前期的模拟，我们看到这样一些现象（采用默认参数）：</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 2.19cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">一般情况下，我们可以观察到</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">25-30</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天的波动周期（如图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">1</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">和图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">2</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">所示）</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 2.19cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">当价值投资者减少市场参与时，会产
+生更大更强的市场波动（周期延长、波幅加大）。</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 2.19cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">极端情况下（如图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">4</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">所示），在完全失去价值投资参与
+时，会产生长周期巨幅波动，周期达到</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">300</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天，震荡波幅高点达到</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">2.5-3</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">倍的初始价格，低点达到初始价格的</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">30-50%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">。</font></font></p>
+<p style="margin-left: 2.19cm; orphans: 0">&nbsp;</p>
+<p style="text-indent: -0.64cm; margin-left: 1.41cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">2</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">投资者行为参数对波动的影响：</font></font></p>
+<p style="text-indent: -0.64cm; margin-left: 2.19cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">价值投资者的估值差异的大小：</font></font></p>
+<p style="text-indent: 0.75cm; margin-left: 2.33cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">在正常市场条件下，</font></font>​<font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">95%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">机构的估值通常落在中间值上下</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">15%-50%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">的范围内，具体取决于股票类型与市
+场波动：</font></font></p>
+<p class="msonormal" style="text-indent: -0.78cm; margin-left: 3.1cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US"><font face="Walbaum Text"><font size="2" style="font-size: 11pt">*&nbsp;</font></font>​</span></font><font face="等线"><font size="2" style="font-size: 11pt">稳健型资产：</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="DengXian Western"><font size="2" style="font-size: 11pt">±15%-25%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">；</font></font></p>
+<p class="msonormal" style="text-indent: -0.78cm; margin-left: 3.1cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US"><font face="Walbaum Text"><font size="2" style="font-size: 11pt">*&nbsp;</font></font>​</span></font><font face="等线"><font size="2" style="font-size: 11pt">成长型资产：</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="DengXian Western"><font size="2" style="font-size: 11pt">±30%-50%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">；</font></font></p>
+<p class="msonormal" style="text-indent: -0.78cm; margin-left: 3.1cm; orphans: 0">
+<font face="Liberation Serif, serif"><span lang="en-US"><font face="Walbaum Text"><font size="2" style="font-size: 11pt">*&nbsp;</font></font>​</span></font><font face="等线"><font size="2" style="font-size: 11pt">高风险资产：</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="DengXian Western"><font size="2" style="font-size: 11pt">±60%+</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">。</font></font></p>
+<p class="msonormal" style="margin-left: 3.1cm; orphans: 0"><font face="等线"><font size="2" style="font-size: 11pt">注：以上信息通过</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">grok</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">查询，资料准确性有待确定。</font></font></p>
+<p style="text-indent: 0.75cm; margin-left: 2.33cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">15</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">显示了价值投资者估值误差标准差（</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">estimation_error</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">）不同的情况下对波动的影响。从上
+到下分别为：</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">0.1</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">，</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">0.25</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">，</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">0.5</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">，周期和波动幅度有明显差异。</font></font></p>
+<p align="center" style="margin-left: 2.19cm; orphans: 0"><img src="StockGame_CN.files/StockGame_CN4671.png" name="图像17" align="bottom" width="465" height="90" border="0"/>
+&nbsp;</p>
+<p align="center" style="margin-left: 2.19cm; orphans: 0"><img src="StockGame_CN.files/StockGame_CN4673.png" name="图像18" align="bottom" width="457" height="98" border="0"/>
+&nbsp;</p>
+<p align="center" style="margin-left: 2.19cm; orphans: 0"><img src="StockGame_CN.files/StockGame_CN4675.png" name="图像19" align="bottom" width="459" height="91" border="0"/>
+&nbsp;</p>
+<p align="center" style="margin-left: 2.19cm; orphans: 0"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">15</font></font></span></font></p>
+<p align="center" style="margin-left: 2.19cm; orphans: 0">&nbsp;</p>
+<p style="text-indent: -0.64cm; margin-left: 2.19cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">-&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">追涨杀跌者的观察周期：</font></font></p>
+<p style="text-indent: 0.75cm; margin-left: 2.33cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">16</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">显示了追涨杀跌者的观察周期不同的
+设置对波动的影响。从上到下分别为：</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">3</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">、</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">10</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">、</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">20</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">三种情况，周期有明显差异，而波动
+幅度基本保持不变。</font></font></p>
+<p align="center" style="margin-left: 2.19cm; orphans: 0"><img src="StockGame_CN.files/StockGame_CN4763.png" name="图像20" align="bottom" width="457" height="82" border="0"/>
+&nbsp;</p>
+<p align="center" style="margin-left: 2.19cm; orphans: 0"><img src="StockGame_CN.files/StockGame_CN4765.png" name="图像21" align="bottom" width="459" height="85" border="0"/>
+&nbsp;</p>
+<p align="center" style="margin-left: 2.19cm; orphans: 0"><img src="StockGame_CN.files/StockGame_CN4767.png" name="图像22" align="bottom" width="459" height="81" border="0"/>
+&nbsp;</p>
+<p style="margin-left: 2.19cm; orphans: 0">&nbsp;</p>
+<p align="center" style="margin-left: 2.19cm; orphans: 0"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">16</font></font></span></font></p>
+<p style="text-indent: 0.75cm; orphans: 1">&nbsp;</p>
+<p style="text-indent: -0.64cm; margin-left: 1.41cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">3</span></font>、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">波动随时间的变化：</font></font></p>
+<p style="text-indent: 0.84cm; margin-left: 1.41cm; orphans: 2"><font face="等线"><font size="2" style="font-size: 11pt">当我们把交易时间延长（到</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">8000</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">个交易日），如图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">17</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">红色圆圈所示股价的波动规律会发生
+变化：股价不再随着真实价值的变化而变化，波动的周期性变弱，波动幅度变小。其原因应该归结为：追涨杀跌者因为追涨杀跌，其资产（包括持股和现
+金）会随着时间的流逝而逐步消耗，对市场价格的影响也逐步减小。这时，即便股票的真实价值大幅上升或者下跌，股价也很难追随真实价值，而变得死气
+沉沉。</font></font></p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><img src="StockGame_CN.files/StockGame_CN4966.png" name="图像23" align="bottom" width="484" height="360" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">17</font></font></span></font></p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">至于其他影响波动频率和幅度的因
+素，大家也可以利用程序进行进一步测试。</font></font></p>
+<p style="text-indent: 0.75cm; orphans: 1">&nbsp;</p>
+<p style="text-indent: -0.78cm; margin-left: 0.78cm; orphans: 0">五、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt"><b>市场资金</b></font></font></p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">我们都知道资金在股市中起到了非常
+重要的作用。我们将在这一段中探讨这个问题。</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">main_ca_3.1.0.py</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">添加了一个功能，就是资金注入和抽
+离功能。我们可以观察当资金注入或者抽离市场后，市场的变化情况。程序支持在指定日期为投资者注入或抽离资金，可针对特定类型或全部投资者进行操
+作，可按固定金额或比例进行资金调整。</font></font></p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">下面我们来观察一下在其他条件相同
+的情况下，注入不同量的资金后市场的</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">1000</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">个交易日的表现（价值曲线的随机数
+种子设置：</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">value_line_seed
+= 2076</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">）：</font></font></p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">情景</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">1</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">：不注入资金的情况</font></font></p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><img src="StockGame_CN.files/StockGame_CN5265.png" name="图像24" align="bottom" width="547" height="98" border="0"/>
+&nbsp;</p>
+<p class="msonormal" align="center" style="orphans: 0"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">18</font></font></span></font></p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">情景</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">2</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">：第</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">3</font></font><font size="2" style="font-size: 11pt">00</font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天为所有投资者注入</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">20%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">资金</font></font></p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><img src="StockGame_CN.files/StockGame_CN5294.png" name="图像25" align="bottom" width="550" height="100" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">19</font></font></span></font></p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">情景</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">3</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">：第</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">3</font></font><font size="2" style="font-size: 11pt">00</font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天为所有投资者注入</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">50%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">资金。注意尾部发生了较大的变化。</font></font></p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><img src="StockGame_CN.files/StockGame_CN5337.png" name="图像26" align="bottom" width="544" height="98" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">20</font></font></span></font></p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">情景</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">4</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">：第</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">3</font></font><font size="2" style="font-size: 11pt">00</font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天为所有投资者注入</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">100%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">资金。</font></font></p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><img src="StockGame_CN.files/StockGame_CN5368.png" name="图像27" align="bottom" width="548" height="99" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">21</font></font></span></font></p>
+<p style="text-indent: 0.75cm; orphans: 1">&nbsp;</p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">情景</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">5</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">：第</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">3</font></font><font size="2" style="font-size: 11pt">00</font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天为所有投资者注入</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">120%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">资金。</font></font></p>
+<p style="text-indent: 0.75cm; orphans: 1">&nbsp;</p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><img src="StockGame_CN.files/StockGame_CN5401.png" name="图像28" align="bottom" width="548" height="102" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">22</font></font></span></font></p>
+<p style="text-indent: 0.75cm; orphans: 1">&nbsp;</p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">情景</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">6</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">：第</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">3</font></font><font size="2" style="font-size: 11pt">00</font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天为所有投资者注入</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">150%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">资金</font></font></p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><img src="StockGame_CN.files/StockGame_CN5432.png" name="图像29" align="bottom" width="547" height="98" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">23</font></font></span></font></p>
+<p style="text-indent: 0.75cm; orphans: 1">&nbsp;</p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">情景</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">7</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">：第</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">3</font></font><font size="2" style="font-size: 11pt">00</font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天为所有投资者注入</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">200%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">资金</font></font></p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><img src="StockGame_CN.files/StockGame_CN5463.png" name="图像30" align="bottom" width="546" height="98" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">24</font></font></span></font></p>
+<p style="text-indent: 0.75cm; orphans: 1">&nbsp;</p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">情景</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">8</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">：第</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">3</font></font><font size="2" style="font-size: 11pt">00</font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天为所有投资者注入</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">250%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">资金</font></font></p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><img src="StockGame_CN.files/StockGame_CN5494.png" name="图像31" align="bottom" width="543" height="99" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">25</font></font></span></font></p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">情景</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">9</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">：第</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">3</font></font><font size="2" style="font-size: 11pt">00</font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天仅为追涨杀跌者注入</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">230%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">资金</font></font></p>
+<p style="text-indent: 0.75cm; orphans: 1">&nbsp;</p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><img src="StockGame_CN.files/StockGame_CN5526.png" name="图像32" align="bottom" width="547" height="99" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">26</font></font></span></font></p>
+<p style="text-indent: 0.75cm; orphans: 1">&nbsp;</p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">下面我们再来观察一下在其他条件相
+同的情况下，抽取不同量的资金后市场的</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">1000</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">个交易日的表现（价值曲线的随机数
+种子设置：</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">value_line_seed
+= 2076</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">）：</font></font></p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">情景</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">1</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">：第</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">3</font></font><font size="2" style="font-size: 11pt">00</font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天从所有交易者抽取</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">20%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">资金</font></font></p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><img src="StockGame_CN.files/StockGame_CN5640.png" name="图像33" align="bottom" width="545" height="100" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">27</font></font></span></font></p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">情景</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">2</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">：第</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">3</font></font><font size="2" style="font-size: 11pt">00</font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天从所有交易者抽取</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">50%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">资金</font></font></p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><img src="StockGame_CN.files/StockGame_CN5669.png" name="图像34" align="bottom" width="545" height="99" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">28</font></font></span></font></p>
+<p style="text-indent: 0.75cm; orphans: 1">&nbsp;</p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">情景</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">3</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">：第</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">3</font></font><font size="2" style="font-size: 11pt">00</font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天从所有交易者抽取</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">50%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">资金</font></font></p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><img src="StockGame_CN.files/StockGame_CN5699.png" name="图像35" align="bottom" width="545" height="98" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">29</font></font></span></font></p>
+<p style="text-indent: 0.75cm; orphans: 1">&nbsp;</p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">情景</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">4</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">：第</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">3</font></font><font size="2" style="font-size: 11pt">00</font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天从所有交易者抽取</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">65%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">资金</font></font></p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><img src="StockGame_CN.files/StockGame_CN5729.png" name="图像36" align="bottom" width="543" height="99" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">30</font></font></span></font></p>
+<p style="text-indent: 0.75cm; orphans: 1">&nbsp;</p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">经过反复测试和观察，我的猜想是：</font></font><u><font face="等线"><font size="2" style="font-size: 11pt">股市是否能够稳定围绕价值线附近上下波动与市场参与者之间资金面的平衡关系更密切，而不是仅仅取决于资金量的多少</font></font></u><font face="等线"><font size="2" style="font-size: 11pt">。</font></font></p>
+<p style="text-indent: 0.75cm; orphans: 1">&nbsp;</p>
+<p style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">众所周知，交易中收取的佣金、印花
+税等手续费对投资者来说是交易的成本，是影响市场的因素之一，影响投资者个体的长期收益，特别对高频交易者来说。但从整个市场面来看，从这个模型
+来看，对股市波动的影响不大。可能是心理层面的影响大于实际影响。下面两个图分别从短期和长期进行了比较，每对图中，上图的买入成本设为</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">0.1%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">，卖出成本设为</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">0.2%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">；下图的买入成本设为</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">1%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">，卖出成本设为</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">2%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">。猜想这些</font></font><u><font face="等线"><font size="2" style="font-size: 11pt">交易成本对参与者都是公平的，并不会破坏资金面的平衡关系</font></font></u><font face="等线"><font size="2" style="font-size: 11pt">。</font></font></p>
+<p align="center" style="margin-left: 0.78cm; orphans: 0"><img src="StockGame_CN.files/StockGame_CN6026.png" name="图像37" align="bottom" width="488" height="86" border="0"/>
+&nbsp;</p>
+<p class="msonormal" align="center" style="text-indent: 0.78cm; orphans: 2">
+<img src="StockGame_CN.files/StockGame_CN6028.png" name="图像38" align="bottom" width="475" height="87" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">31</font></font></span></font></p>
+<p class="msonormal" align="center" style="text-indent: 0.78cm; orphans: 2">
+<img src="StockGame_CN.files/StockGame_CN6034.png" name="图像39" align="bottom" width="547" height="100" border="0"/>
+&nbsp;</p>
+<p class="msonormal" align="center" style="text-indent: 0.78cm; orphans: 2">
+<img src="StockGame_CN.files/StockGame_CN6036.png" name="图像40" align="bottom" width="550" height="102" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">32</font></font></span></font></p>
+<p class="msonormal" style="text-indent: 0.78cm; orphans: 2">&nbsp;</p>
+<p style="text-indent: -0.78cm; margin-left: 0.78cm; orphans: 0">六、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">信息的传递与消息投资者</font></font></p>
+<p style="text-indent: 0.72cm; margin-left: 0.78cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">市场上各种各样的消息，有利好消息
+和利空消息，这些消息将影响到股票的价值，使得大家会重新对股票进行估值，进而影响股票走势。有的投资者非常关注这些消息，有的一点也不关心。有
+的事先通过内部渠道获得消息，有的事后从公开渠道获得，有的无从获知。当然消息有真有假，有上当受骗者，也有利用消息来控制股价。</font></font></p>
+<p style="text-indent: 0.72cm; margin-left: 0.78cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">在这个模型中，我们可以把真实价值
+的变化，看成是利好和利空消息。并假设有投资者利用信息进行交易，</font></font><u><font face="等线"><font size="2" style="font-size: 11pt">消息投资者</font></font></u><font face="等线"><font size="2" style="font-size: 11pt">是利用公开信息进行交易，我们在程序中做了如下的设定：</font></font></p>
+<p style="margin-left: 1.41cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">-
+</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">信息获取时机</font></font>&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">：在股票真实价值变化后</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">1-5</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天获知变化方向。</font></font></p>
+<p style="margin-left: 1.41cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">-
+</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">交易方向</font></font>&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">：价值上涨后全仓买入，价值下跌清
+仓卖出。</font></font></p>
+<p style="margin-left: 1.41cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">-
+</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">持仓策略</font></font>&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">：买入后持有至</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">15%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">浮盈、</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">20%</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">浮亏或</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">30</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">天后卖出（这些参数可调整）。</font></font></p>
+<p style="text-indent: 0.72cm; margin-left: 0.78cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">运行</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">main_ca_3.2.1.1.py</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">之后可以看到</font></font><u><font face="等线"><font size="2" style="font-size: 11pt">消息投资者的市场</font></font></u><font face="等线"><font size="2" style="font-size: 11pt">表现：</font></font></p>
+<p align="center" style="text-indent: 0.72cm; margin-left: 0.78cm; orphans: 1">
+<img src="StockGame_CN.files/StockGame_CN6421.png" name="图像41" align="bottom" width="489" height="354" border="0"/>
+&nbsp;</p>
+<p align="center" style="text-indent: 0.72cm; margin-left: 0.78cm; orphans: 1">
+<font face="等线"><font size="2" style="font-size: 11pt">图</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">33</font></font></span></font></p>
+<p class="msonormal" style="orphans: 0">&nbsp;</p>
+<p style="text-indent: -0.78cm; margin-left: 0.78cm; orphans: 0">七、&nbsp;<font face="等线"><font size="2" style="font-size: 11pt">小结</font></font></p>
+<p class="msonormal" style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">到现在为止，我们似乎有了一套看上
+去比较完善的交易模拟系统。在这个模拟系统中：</font></font></p>
+<p style="text-indent: -0.78cm; margin-left: 1.55cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">1.&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">我们从交易者行为特征出发，加入了
+若干种投资者，包括：价值投资者、趋势投资者、追涨杀跌者、随机投资者、永不止损投资者、抄底投资者、消息投资者。</font></font></p>
+<p style="text-indent: -0.78cm; margin-left: 1.55cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">2.&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">在交易上，我们仅采用了一次集合竞
+价的方式来模拟每天的交易，生成价格序列和交易量序列，观察市场变化情况。</font></font></p>
+<p style="text-indent: -0.78cm; margin-left: 1.55cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">3.&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">从模拟结果的输出上，我们可以观察
+到股票价格和交易量的波动情况，以及每类投资者的资产、现金、持仓的平均变化情况。</font></font></p>
+<p style="text-indent: -0.78cm; margin-left: 1.55cm; orphans: 0"><font face="Liberation Serif, serif"><span lang="en-US">4.&nbsp;</span></font><font face="等线"><font size="2" style="font-size: 11pt">我们加入了向市场注入或抽离资金的
+功能，并加入了交易手续费的情况，可以观察市场整体资金变化对交易的影响。</font></font></p>
+<p class="msonormal" style="text-indent: 0.75cm; orphans: 1"><font face="等线"><font size="2" style="font-size: 11pt">以上模型的建立是在本人对探索市场
+运行规律的业余爱好和对经济学理论肤浅理解的基础上建立起来的，似乎能一定程度上反应市场规律，有和市场现象相拟合的，也有不那么匹配的。似乎能
+总结出一些规律，但又有点似是而非。鉴于本人的学术能力有限、认知有限，模型也过于简化，有太多基于日常经验的假设，因此该模型只能看作一个有趣
+的试验游戏。另外，本人的程序开发能力也比较有限，或许一句代码的瑕疵就可能推翻全部的结论。本模型在各种条件下的运行测试数量也不够，没有足够
+多的数据进行归纳总结，文中所涉及的某些结论只能称之为猜想，可能并不足以全方位解释和理解市场。所以，我将各个进化的代码版本开源于此，供志同
+道合者一起把玩雕琢改进。</font></font></p>
+<p class="msonormal" style="orphans: 0">&nbsp;</p>
+<p class="msonormal" style="orphans: 0"><font face="等线"><font size="2" style="font-size: 11pt">毅</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">Á</font></font></span></font></p>
+<p class="msonormal" style="orphans: 0"><font face="等线"><font size="2" style="font-size: 11pt">完稿于</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">2025</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">年</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">5</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">月</font></font><font face="Liberation Serif, serif"><span lang="en-US"><font face="等线"><font size="2" style="font-size: 11pt">1</font></font></span></font><font face="等线"><font size="2" style="font-size: 11pt">日</font></font></p>
+<p class="msonormal" style="orphans: 0">&nbsp;</p>
+<p class="msonormal" style="orphans: 0">&nbsp;</p>
+</body>
+</html>
